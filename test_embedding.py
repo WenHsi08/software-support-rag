@@ -3,6 +3,7 @@ from google.genai import types
 from pathlib import Path
 from knowledge_base import load_chunks
 from retriever import search_chunks
+from context_builder import build_context
 
 
 # 沿用目前環境變數中的 API key
@@ -81,3 +82,15 @@ else:
         print(f"\n第 {rank} 名｜相似度：{result['score']:.4f}")
         print(f"標題：{heading}")
         print(f"來源：{result['source_id']} / {result['source_file']}")
+
+
+        # 暫時取前兩名，驗證參考資料組合
+    selected_chunks = results[:2]
+
+    context = build_context(
+        selected_chunks,
+        chunks,
+    )
+
+    print("\n--- 準備提供給 LLM 的參考資料 ---")
+    print(context)
