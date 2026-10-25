@@ -1,5 +1,6 @@
 from google import genai
 
+
 # 建立 API 用戶端，自動讀取環境變數 GEMINI_API_KEY
 client = genai.Client()
 
