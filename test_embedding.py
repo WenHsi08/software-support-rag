@@ -8,11 +8,14 @@ from knowledge_base import load_chunks
 from context_builder import build_context
 from storage import init_db, save_document, load_document_vectors
 from retriever import search_chunks, select_chunks
+from answerer import answer_question
 
 
 # 統一問題與文件使用的 Embedding 設定
 EMBEDDING_MODEL = "gemini-embedding-001"
 EMBEDDING_DIMENSIONS = 3072
+# 回答模型：沿用你之前 test_llm.py 成功使用的模型名稱
+ANSWER_MODEL = "gemini-3.8-flash"
 
 # 自動讀取環境變數中的 API key
 client = genai.Client()
@@ -198,3 +201,15 @@ else:
     else:
         context = ""
         print("\n沒有選到可提供的文件區塊。")
+
+        # 有參考資料時呼叫 LLM，否則由函式直接回覆
+    answer = answer_question(
+        client=client,
+        model=ANSWER_MODEL,
+        question=question,
+        selection=selection,
+        context=context,
+    )
+
+    print("\n--- 助手回答 ---")
+    print(answer)
