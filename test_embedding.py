@@ -5,9 +5,9 @@ from google import genai
 from google.genai import types
 
 from knowledge_base import load_chunks
-from retriever import search_chunks
 from context_builder import build_context
 from storage import init_db, save_document, load_document_vectors
+from retriever import search_chunks, select_chunks
 
 
 # 統一問題與文件使用的 Embedding 設定
@@ -167,13 +167,34 @@ else:
 
     # ---------- 組合 LLM 參考資料 ----------
 
-    # 暫時取前兩名，尚未加入門檻與精確代碼選取
-    selected_chunks = results[:2]
-
-    context = build_context(
-        selected_chunks,
-        chunks,
+    # 根據問題是否包含代碼，決定選取方式
+    selection = select_chunks(
+        question=question,
+        ranked_chunks=results,
+        top_k=2,
     )
 
-    print("\n--- 準備提供給 LLM 的參考資料 ---")
-    print(context)
+    selected_chunks = selection["selected_chunks"]
+
+    print("\n--- 選取結果 ---")
+    print("選取方式：", selection["mode"])
+    print("主要區塊數量：", len(selected_chunks))
+
+    if selection["unknown_codes"]:
+        unknown_text = "、".join(selection["unknown_codes"])
+
+        print(f"目前文件未收錄以下代碼：{unknown_text}")
+        print("請確認代碼或提供完整錯誤訊息，不直接套用其他代碼的解法。")
+
+    if selected_chunks:
+        context = build_context(
+            selected_chunks,
+            chunks,
+        )
+
+        print("\n--- 準備提供給 LLM 的參考資料 ---")
+        print(context)
+
+    else:
+        context = ""
+        print("\n沒有選到可提供的文件區塊。")
